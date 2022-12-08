@@ -1,14 +1,31 @@
+import { db } from "../../util/firebase"
+import { collection, onSnapshot, query } from "firebase/firestore"
 import ChatboxControl from "./ChatboxControl"
 import ChatboxHeading from "./ChatboxHeading"
-import { VStack } from "@chakra-ui/react"
-import { useState } from "react"
+import ChatView from "./ChatView"
+import { Spinner, VStack } from "@chakra-ui/react"
+import { useEffect, useState } from "react"
+import { Chat, ChatWithId } from "../../types"
+
+const chatQuery = query(collection(db, 'chats'))
 
 const Chatbox = () => {
+    const [chats, setChats] = useState<ChatWithId[] | null>(null)
+
+    useEffect(() => {
+        const unsubscribe = onSnapshot(chatQuery, (querySnapshot) => {
+            setChats(querySnapshot.docs.map((doc) => {
+                return {... doc.data() as Chat, id: doc.id};
+            }))
+        })
+        return unsubscribe
+    }, [])
+
     return (
         <VStack spacing={55} marginBottom={55}>
             <ChatboxHeading />
             <ChatboxControl />
-            {/* <ChatView /> */}
+            {chats ? <ChatView chats={chats}/> : <Spinner />}
         </VStack>
     )
 }
