@@ -3,7 +3,6 @@ import Head from "next/head"
 import Navbar from "./Navbar"
 import Footer from "./Footer"
 import { Container } from "@chakra-ui/react"
-import ChatboxHeading from "./Heading"
 
 type Props = {
   children?: ReactNode
@@ -19,7 +18,6 @@ const Layout = ({ children, title }: Props) => (
       <link rel="icon" href="/favicon.ico" />
     </Head>
     <Navbar />
-    <ChatboxHeading />
     <Container my={6}>{children}</Container>
     <Footer />
   </div>

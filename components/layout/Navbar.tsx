@@ -1,55 +1,23 @@
 import React from "react"
-import NextLink from "next/link"
-import { Box, Button, HStack, Link } from "@chakra-ui/react"
-import { useRouter } from "next/router"
-
-type NavLinkData = {
-  name: string
-  path: string
-}
-
-const navData: NavLinkData[] = [
-  {
-    name: "Home",
-    path: "/",
-  },
-  {
-    name: "Frodo",
-    path: "/frodo",
-  },
-]
-
-const NavLink = ({ name, path }: NavLinkData) => {
-  const { pathname: currentPath } = useRouter()
-  return (
-    <NextLink key={path} href={path} passHref legacyBehavior>
-      <Link
-        _hover={{
-          textDecoration: "none",
-        }}
-        tabIndex={-1}
-      >
-        <Button
-          _focusVisible={{ shadow: "outline" }}
-          _focus={{ shadow: "none" }}
-          colorScheme={"facebook"}
-          variant={currentPath === path ? "solid" : "ghost"}
-        >
-          {name}
-        </Button>
-      </Link>
-    </NextLink>
-  );
-}
+import { Box, Button, HStack } from "@chakra-ui/react"
 
 const Navbar = () => {
   return (
     <Box px={4} shadow="base">
       <HStack justifyContent="right">
         <HStack h={14} as="nav" spacing={4} alignItems="center">
-          {navData.map((data) => (
-            <NavLink key={data.path} {...data} />
-          ))}
+            <Button
+              bgGradient="linear(to-r, cyan.700, purple.500)"
+              bgClip="text"
+              variant="outline"
+              borderColor="cyan.700"
+              fontWeight={"bold"}
+              _hover={{
+                color: "white",
+                bgClip:"border-box"
+              }}>
+                Sign In
+            </Button>
         </HStack>
       </HStack>
     </Box>
