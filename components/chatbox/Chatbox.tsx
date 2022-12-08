@@ -1,5 +1,5 @@
 import { db } from "../../util/firebase"
-import { collection, onSnapshot, query } from "firebase/firestore"
+import { collection, onSnapshot, orderBy, query } from "firebase/firestore"
 import ChatboxControl from "./ChatboxControl"
 import ChatboxHeading from "./ChatboxHeading"
 import ChatView from "./ChatView"
@@ -7,10 +7,11 @@ import { Spinner, VStack } from "@chakra-ui/react"
 import { useEffect, useState } from "react"
 import { Chat, ChatWithId } from "../../types"
 
-const chatQuery = query(collection(db, 'chats'))
+const chatQuery = query(collection(db, 'chats'), orderBy("modified", "desc"))
 
 const Chatbox = () => {
     const [chats, setChats] = useState<ChatWithId[] | null>(null)
+    const [edit, setEdit] = useState<string | null>(null)
 
     useEffect(() => {
         const unsubscribe = onSnapshot(chatQuery, (querySnapshot) => {
@@ -25,7 +26,7 @@ const Chatbox = () => {
         <VStack spacing={55} marginBottom={55}>
             <ChatboxHeading />
             <ChatboxControl />
-            {chats ? <ChatView chats={chats}/> : <Spinner />}
+            {chats ? <ChatView chats={chats} edit={edit} setEdit={setEdit}/> : <Spinner />}
         </VStack>
     )
 }

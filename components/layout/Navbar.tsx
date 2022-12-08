@@ -15,6 +15,10 @@ const Navbar = () => {
               _hover={{
                 color: "white",
                 bgClip:"border-box"
+              }}
+              _active={{
+                bgGradient:"linear(to-r, cyan.700, purple.500)",
+                bgClip:"text",
               }}>
                 Sign In
             </Button>

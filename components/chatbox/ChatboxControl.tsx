@@ -1,11 +1,24 @@
 import { Box, VStack, Button, Textarea, Checkbox, Flex } from "@chakra-ui/react"
+import { Chat } from "../../types/index"
 import { FormEventHandler, useState } from "react"
+import { addDoc, collection, Timestamp } from "firebase/firestore"
+import { db } from "../../util/firebase"
 
 const ChatboxControl = () => {
     const [input, setInput] = useState("")
 
     const addChat: FormEventHandler<HTMLFormElement> = (e) => {
+        e.preventDefault()
 
+        const chat: Chat = {
+            author: "Anonymous",
+            content: input,
+            modified: Timestamp.fromMillis(Date.now())
+        }
+
+        addDoc(collection(db, 'chats'), chat)
+
+        setInput("")
     }
 
     return (
@@ -25,6 +38,7 @@ const ChatboxControl = () => {
               borderTopWidth="1.5px"
               borderBottomWidth="1px"
               borderStyle="solid"
+              isRequired
               borderColor="cyan.700"
             />
             <Flex w="100%">
