@@ -3,15 +3,21 @@ import { Chat } from "../../types/index"
 import { FormEventHandler, useState } from "react"
 import { addDoc, collection, Timestamp } from "firebase/firestore"
 import { db } from "../../util/firebase"
+import { useAuth } from "../auth/AuthUserProvider"
 
 const ChatboxControl = () => {
     const [input, setInput] = useState("")
+    const [anon, setAnon] = useState(true)
+    const { user } = useAuth()
 
     const addChat: FormEventHandler<HTMLFormElement> = (e) => {
         e.preventDefault()
 
+        let author = user && !anon ? user.uid : "anon"
+        let authorName = user && !anon  && user.displayName ? user.displayName : "Anonymous"
         const chat: Chat = {
-            author: "Anonymous",
+            author: author,
+            authorName: authorName,
             content: input,
             modified: Timestamp.fromMillis(Date.now())
         }
@@ -42,14 +48,15 @@ const ChatboxControl = () => {
               borderColor="cyan.700"
             />
             <Flex w="100%">
-              <Checkbox isChecked={true} isDisabled={true}
-                        textAlign="left">
+              <Checkbox isChecked={anon} isDisabled={user ? false : true}
+                        textAlign="left" onChange={() => setAnon(!anon)}>
                   Anonymous
               </Checkbox>
               <Button type="submit" marginLeft="auto" color="white"
                       textStyle="bold"
                       background="cyan.600"
-                      _hover={{background: "purple.700", color: "white"}}>
+                      _hover={{background: "purple.700", color: "white"}}
+                      isDisabled={input.length == 0}>
                   Chat!
               </Button>
             </Flex>

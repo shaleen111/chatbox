@@ -11,10 +11,8 @@ type Props = {
 }
 
 const ChatView = ({ edit, setEdit, chats }: Props) => {
-
-
     return (
-        <VStack>
+        <VStack minWidth={'100%'}>
             {chats.length ? (
                 chats.map((chat) => <ChatCard key={chat.id} chat={chat}
                                               edit={edit} setEdit={setEdit}/>)

@@ -1,14 +1,16 @@
-import { ChatWithId } from "../../types/index"
+import { ChatWithId, Reaction } from "../../types/index"
 import { Card, CardBody, CardFooter, CardHeader, Heading,
-         Flex, Text, Button, useBreakpointValue, Spacer, Textarea,
+         Flex, Text, Button, Spacer, Textarea,
          VStack, Modal, ModalContent, ModalOverlay,
          ModalHeader, ModalCloseButton, ModalFooter, useDisclosure,
          } from "@chakra-ui/react"
 import { motion } from "framer-motion"
 import { FaThumbsUp, FaThumbsDown, FaPen, FaTrash } from "react-icons/fa"
-import { useState, Dispatch, SetStateAction, FormEventHandler } from "react"
+import { useState, Dispatch, SetStateAction, FormEventHandler, useEffect } from "react"
 import { db } from "../../util/firebase"
-import { updateDoc, doc, Timestamp, deleteDoc } from "firebase/firestore"
+import { updateDoc, doc, Timestamp, deleteDoc, getDoc, query, collection, where, onSnapshot, getDocs, addDoc, setDoc } from "firebase/firestore"
+import { useAuth } from "../auth/AuthUserProvider"
+import { resolve } from "path"
 
 type Props = {
     readonly chat: ChatWithId
@@ -59,7 +61,7 @@ const ToolBar = ({edit, setEdit, chat: {id, content}, setInput}
 
         <Modal isOpen={isOpen} onClose={onClose}>
         <ModalOverlay />
-        <ModalContent>
+        <ModalContent width='95%' margin='auto'>
           <ModalCloseButton />
           <ModalHeader marginTop={5}>Are you sure you want to delete this chat?</ModalHeader>
           <ModalFooter>
@@ -77,7 +79,7 @@ const ToolBar = ({edit, setEdit, chat: {id, content}, setInput}
     )
 }
 
-const ChatCardHeader = ({chat: {author, modified}}: Props) =>
+const ChatCardHeader = ({chat: {authorName, modified}}: Props) =>
 {
     return (
         <CardHeader paddingTop="5" paddingBottom="2"
@@ -85,7 +87,7 @@ const ChatCardHeader = ({chat: {author, modified}}: Props) =>
                 <Flex alignItems={"center"}>
                     <Heading fontSize="1.35em"
                              color="purple.700">
-                        {author}
+                        {authorName}
                     </Heading>
                     <Heading size="sm"
                              marginLeft="auto"
@@ -146,17 +148,103 @@ const ChatCardContent = ({edit, setEdit, chat:{id, content}, input, setInput}
     )
 }
 
-const ReactionBar = () =>
+const ReactionBar = ({chat: {id}}: Props) =>
 {
+    let { user } = useAuth()
+    let [reaction, setReaction] = useState(0)
+    let [likeCount, setLikeCount] = useState(0)
+    let [dislikeCount, setDislikeCount] = useState(0)
+
+    useEffect(() => {
+        if(!user) return
+        const getReacts = async () => {
+            let resp = await getDoc(doc(db, "reactions", user!.uid + ":" + id))
+            let val = resp.exists() ? ({...resp.data()} as Reaction).state : 0
+            setReaction(val)
+
+            let counts = await getDocs(query(collection(db, "reactions"), where("chatId", "==", id)))
+
+            counts.docs.forEach((doc) => {
+                let react = {...doc.data()} as Reaction
+                if(react.state == 1)
+                {
+                    setLikeCount(likeCount + 1)
+                }
+                else if(react.state == 2)
+                {
+                    setDislikeCount(dislikeCount + 1)
+                }
+            })
+
+        }
+        getReacts()
+    }, [])
+
+    const like = () => {
+        if(!user) return
+        let docId = user.uid + ":" + id
+        if(reaction === 1)
+        {
+            setReaction(0)
+            setLikeCount(likeCount - 1)
+            updateDoc(doc(db, "reactions", docId), {chatId: id, state: reaction})
+        }
+        else if(reaction === 2)
+        {
+            setReaction(1)
+            setDislikeCount(dislikeCount - 1)
+            setLikeCount(likeCount + 1)
+            updateDoc(doc(db, "reactions", docId), {chatId: id, state: reaction})
+        }
+        else
+        {
+            setReaction(1)
+            setLikeCount(likeCount + 1)
+            setDoc(doc(db, "reactions", docId), {
+                chatId: id,
+                state: 1
+            })
+        }
+    }
+
+    const dislike = () => {
+        if(!user) return
+        let docId = user.uid + ":" + id
+        if(reaction === 2)
+        {
+            setReaction(0)
+            setDislikeCount(dislikeCount - 1)
+            updateDoc(doc(db, "reactions", docId), {chatId: id, state: reaction})
+        }
+        else if(reaction === 1)
+        {
+            setReaction(2)
+            setDislikeCount(dislikeCount + 1)
+            setLikeCount(likeCount - 1)
+            updateDoc(doc(db, "reactions", docId), {chatId: id, state: reaction})
+        }
+        else
+        {
+            setReaction(2)
+            setDislikeCount(dislikeCount + 1)
+            setDoc(doc(db, "reactions", docId), {
+                chatId: id,
+                state: 1
+            })
+        }
+    }
+
     return (
         <CardFooter py={2}
         justify="space-between"
         flexWrap="wrap">
-        <Button flex='1' variant='ghost' leftIcon={<FaThumbsUp />}>
-        5 Likes
+        <Button flex='1' variant='ghost' leftIcon={<FaThumbsUp />} isActive={reaction == 1}
+        onClick={like}>
+        {likeCount} Likes
         </Button>
-        <Button flex='1' variant='ghost' leftIcon={<FaThumbsDown />}>
-        6 Dislikes
+        <Button flex='1' variant='ghost' leftIcon={<FaThumbsDown />} isActive={reaction == 2}
+        onClick={dislike}>
+        {dislikeCount} Dislikes
         </Button>
         </CardFooter>
     )
@@ -164,20 +252,25 @@ const ReactionBar = () =>
 
 const ChatCard = (props: Props) => {
     let [input, setInput] = useState("")
+    let { user } = useAuth()
 
     return (
         <motion.div
          initial={{ scale: 0.5 }}
          animate={{ scale: 1 }}
-         transition={{ duration: 0.45 }}>
-        <Card minWidth={useBreakpointValue({ base: '120%', md: '40em' })}>
-            <ToolBar {...props} setInput={setInput}/>
+         transition={{ duration: 0.45 }}
+         style={{width: '100%'}}>
+        <Card margin="0" padding="0" minWidth='100%'>
+            {  user && user.uid == props.chat.author ?
+                <ToolBar {...props} setInput={setInput}/>
+               : ""
+            }
 
             <ChatCardHeader {...props}/>
 
             <ChatCardContent {...props} input={input} setInput={setInput}/>
 
-            <ReactionBar />
+            <ReactionBar {...props} />
         </Card>
         </motion.div>
     )

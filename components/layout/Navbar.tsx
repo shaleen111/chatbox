@@ -1,7 +1,10 @@
 import React from "react"
 import { Box, Button, HStack } from "@chakra-ui/react"
+import { signInWithGoogle } from "../../util/firebase"
+import { useAuth } from "../auth/AuthUserProvider"
 
 const Navbar = () => {
+  const { user, signOut } = useAuth()
   return (
     <Box px={4} shadow="base">
       <HStack justifyContent="right">
@@ -19,8 +22,9 @@ const Navbar = () => {
               _active={{
                 bgGradient:"linear(to-r, cyan.700, purple.500)",
                 bgClip:"text",
-              }}>
-                Sign In
+              }}
+              onClick={user ? signOut : signInWithGoogle}>
+                {user ? "Sign Out" : "Sign In"}
             </Button>
         </HStack>
       </HStack>
