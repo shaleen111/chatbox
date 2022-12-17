@@ -156,11 +156,13 @@ const ReactionBar = ({chat: {id}}: Props) =>
     let [dislikeCount, setDislikeCount] = useState(0)
 
     useEffect(() => {
-        if(!user) return
         const getReacts = async () => {
-            let resp = await getDoc(doc(db, "reactions", user!.uid + ":" + id))
-            let val = resp.exists() ? ({...resp.data()} as Reaction).state : 0
-            setReaction(val)
+            if(user)
+            {
+                let resp = await getDoc(doc(db, "reactions", user!.uid + ":" + id))
+                let val = resp.exists() ? ({...resp.data()} as Reaction).state : 0
+                setReaction(val)
+            }
 
             let counts = await getDocs(query(collection(db, "reactions"), where("chatId", "==", id)))
 
@@ -238,11 +240,11 @@ const ReactionBar = ({chat: {id}}: Props) =>
         <CardFooter py={2}
         justify="space-between"
         flexWrap="wrap">
-        <Button flex='1' variant='ghost' leftIcon={<FaThumbsUp />} isActive={reaction == 1}
+        <Button flex='1' variant='ghost' leftIcon={<FaThumbsUp />} isActive={user != undefined && reaction == 1}
         onClick={like}>
         {likeCount} Likes
         </Button>
-        <Button flex='1' variant='ghost' leftIcon={<FaThumbsDown />} isActive={reaction == 2}
+        <Button flex='1' variant='ghost' leftIcon={<FaThumbsDown />} isActive={reaction == 2 && user != undefined}
         onClick={dislike}>
         {dislikeCount} Dislikes
         </Button>
