@@ -3,14 +3,16 @@ import { Card, CardBody, CardFooter, CardHeader, Heading,
          Flex, Text, Button, Spacer, Textarea,
          VStack, Modal, ModalContent, ModalOverlay,
          ModalHeader, ModalCloseButton, ModalFooter, useDisclosure,
-         } from "@chakra-ui/react"
+       } from "@chakra-ui/react"
 import { motion } from "framer-motion"
 import { FaThumbsUp, FaThumbsDown, FaPen, FaTrash } from "react-icons/fa"
-import { useState, Dispatch, SetStateAction, FormEventHandler, useEffect } from "react"
+import { useState, Dispatch, SetStateAction, FormEventHandler,
+         useEffect } from "react"
 import { db } from "../../util/firebase"
-import { updateDoc, doc, Timestamp, deleteDoc, getDoc, query, collection, where, onSnapshot, getDocs, addDoc, setDoc } from "firebase/firestore"
+import { updateDoc, doc, Timestamp, deleteDoc, getDoc, query,
+         collection, where, getDocs, setDoc
+       } from "firebase/firestore"
 import { useAuth } from "../auth/AuthUserProvider"
-import { resolve } from "path"
 
 type Props = {
     readonly chat: ChatWithId
@@ -154,7 +156,10 @@ const ReactionBar = ({chat: {id}}: Props) =>
     let [reaction, setReaction] = useState(0)
     let [likeCount, setLikeCount] = useState(0)
     let [dislikeCount, setDislikeCount] = useState(0)
-
+    useEffect(() => {
+        if(!user) return
+        setDoc(doc(db, "reactions", user!.uid + ":" + id), {chatId: id, state: reaction})
+    }, [reaction])
     useEffect(() => {
         const getReacts = async () => {
             if(user)
@@ -166,73 +171,61 @@ const ReactionBar = ({chat: {id}}: Props) =>
 
             let counts = await getDocs(query(collection(db, "reactions"), where("chatId", "==", id)))
 
+            setLikeCount(0)
+            setDislikeCount(0)
             counts.docs.forEach((doc) => {
                 let react = {...doc.data()} as Reaction
                 if(react.state == 1)
                 {
-                    setLikeCount(likeCount + 1)
+                    setLikeCount(c => (c + 1))
                 }
                 else if(react.state == 2)
                 {
-                    setDislikeCount(dislikeCount + 1)
+                    setDislikeCount(c => (c + 1))
                 }
             })
 
         }
         getReacts()
-    }, [])
+    }, [user, id])
 
     const like = () => {
         if(!user) return
-        let docId = user.uid + ":" + id
         if(reaction === 1)
         {
             setReaction(0)
             setLikeCount(likeCount - 1)
-            updateDoc(doc(db, "reactions", docId), {chatId: id, state: reaction})
         }
         else if(reaction === 2)
         {
             setReaction(1)
             setDislikeCount(dislikeCount - 1)
             setLikeCount(likeCount + 1)
-            updateDoc(doc(db, "reactions", docId), {chatId: id, state: reaction})
         }
         else
         {
             setReaction(1)
             setLikeCount(likeCount + 1)
-            setDoc(doc(db, "reactions", docId), {
-                chatId: id,
-                state: 1
-            })
         }
     }
 
     const dislike = () => {
         if(!user) return
-        let docId = user.uid + ":" + id
         if(reaction === 2)
         {
             setReaction(0)
             setDislikeCount(dislikeCount - 1)
-            updateDoc(doc(db, "reactions", docId), {chatId: id, state: reaction})
         }
         else if(reaction === 1)
         {
             setReaction(2)
             setDislikeCount(dislikeCount + 1)
             setLikeCount(likeCount - 1)
-            updateDoc(doc(db, "reactions", docId), {chatId: id, state: reaction})
         }
         else
         {
             setReaction(2)
             setDislikeCount(dislikeCount + 1)
-            setDoc(doc(db, "reactions", docId), {
-                chatId: id,
-                state: 1
-            })
         }
     }
 
