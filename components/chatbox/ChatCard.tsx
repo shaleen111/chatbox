@@ -160,13 +160,18 @@ const ReactionBar = ({chat: {id}}: Props) =>
         if(!user) return
         setDoc(doc(db, "reactions", user!.uid + ":" + id), {chatId: id, state: reaction})
     }, [reaction])
+
     useEffect(() => {
         const getReacts = async () => {
             if(user)
             {
-                let resp = await getDoc(doc(db, "reactions", user!.uid + ":" + id))
+                let resp = await getDoc(doc(db, "reactions", user.uid + ":" + id))
                 let val = resp.exists() ? ({...resp.data()} as Reaction).state : 0
                 setReaction(val)
+            }
+            else
+            {
+                setReaction(0)
             }
 
             let counts = await getDocs(query(collection(db, "reactions"), where("chatId", "==", id)))
