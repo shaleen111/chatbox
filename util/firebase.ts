@@ -1,7 +1,9 @@
 import { initializeApp, getApps, getApp } from "firebase/app"
 import { getFirestore } from "firebase/firestore"
-import { getAuth, GoogleAuthProvider, signInWithPopup,
-         signOut } from "firebase/auth"
+import {
+  getAuth, GoogleAuthProvider, signInWithPopup,
+  signOut
+} from "firebase/auth"
 import withFirebaseAuth from "react-with-firebase-auth";
 
 const firebaseConfig = {

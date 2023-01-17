@@ -16,7 +16,7 @@ const Chatbox = () => {
     useEffect(() => {
         const unsubscribe = onSnapshot(chatQuery, (querySnapshot) => {
             setChats(querySnapshot.docs.map((doc) => {
-                return {... doc.data() as Chat, id: doc.id};
+                return { ...doc.data() as Chat, id: doc.id };
             }))
         })
         return unsubscribe
@@ -26,7 +26,7 @@ const Chatbox = () => {
         <VStack spacing={55} marginBottom={55}>
             <ChatboxHeading />
             <ChatboxControl />
-            {chats ? <ChatView chats={chats} edit={edit} setEdit={setEdit}/> : <Spinner />}
+            {chats ? <ChatView chats={chats} edit={edit} setEdit={setEdit} /> : <Spinner />}
         </VStack>
     )
 }

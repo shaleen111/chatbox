@@ -1,4 +1,4 @@
-import { Timestamp }  from "firebase/firestore"
+import { Timestamp } from "firebase/firestore"
 
 export type Chat = {
   content: string
@@ -11,8 +11,13 @@ export type ChatWithId = Chat & {
   id: string
 }
 
-export type Reaction =
-{
+export type Reaction = {
   state: number
   chatId: string
+}
+
+export enum ReactionState {
+  NoReact,
+  Like,
+  Dislike
 }
