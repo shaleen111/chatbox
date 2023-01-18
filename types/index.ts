@@ -1,3 +1,4 @@
+import { LinkOverlay } from "@chakra-ui/react"
 import { Timestamp } from "firebase/firestore"
 
 export type Chat = {

@@ -10,7 +10,7 @@ import {
   useState, Dispatch, SetStateAction, FormEventHandler,
   useEffect
 } from "react"
-import { db } from "../../util/firebase"
+import { db, signInWithGoogle } from "../../util/firebase"
 import {
   updateDoc, doc, Timestamp, deleteDoc, setDoc
 } from "firebase/firestore"
@@ -154,6 +154,9 @@ const ReactionBar = ({ chat: { id }, reactions }: Props) => {
   const [likeCount, setLikeCount] = useState(0)
   const [dislikeCount, setDislikeCount] = useState(0)
 
+  // log in prompts
+  const { isOpen, onOpen, onClose } = useDisclosure()
+
   useEffect(() => {
     if (user) {
       let currChat = user.uid + ":" + id
@@ -166,19 +169,22 @@ const ReactionBar = ({ chat: { id }, reactions }: Props) => {
     else {
       setReaction(ReactionState.NoReact)
     }
+  }, [user, reactions, id])
 
+  useEffect(() => {
     setLikeCount(0)
     setDislikeCount(0)
-    reactions.forEach((react, _) => {
-      if (react.chatId !== id) return
-      if (react.state == ReactionState.Like) {
+    reactions.forEach((react, key) => {
+      let chatId = key.split(":")[1]
+      if (chatId !== id) return
+      if (react.state === ReactionState.Like) {
         setLikeCount(c => (c + 1))
       }
       else if (react.state == ReactionState.Dislike) {
         setDislikeCount(c => (c + 1))
       }
     })
-  }, [reactions, id, user])
+  }, [reactions, id])
 
   useEffect(() => {
     if (!user || reaction === null) return
@@ -188,7 +194,10 @@ const ReactionBar = ({ chat: { id }, reactions }: Props) => {
 
   const reactionToggler = (pressed: ReactionState) => {
     // Make sure a user exists
-    if (!user) return
+    if (!user) {
+      onOpen()
+      return
+    }
 
     // Undo past reaction.
     if (reaction === ReactionState.Like) {
@@ -229,6 +238,23 @@ const ReactionBar = ({ chat: { id }, reactions }: Props) => {
         onClick={() => reactionToggler(ReactionState.Dislike)}>
         {dislikeCount} Dislikes
       </Button>
+
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalOverlay />
+        <ModalContent width='95%' margin='auto'>
+          <ModalCloseButton />
+          <ModalHeader marginTop={5}>Please login to interact with chats!</ModalHeader>
+          <ModalFooter>
+            <Button mr={3} onClick={onClose}
+              textStyle="bold">
+              Close
+            </Button>
+            <Button variant='ghost' color="purple" onClick={signInWithGoogle}>
+              Sign In
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </CardFooter>
   )
 }

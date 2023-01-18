@@ -13,29 +13,11 @@ type Props = {
   readonly chats: ChatWithId[]
   readonly edit: string | null
   readonly setEdit: Dispatch<SetStateAction<string | null>>
+  readonly reactions: Map<string, Reaction>
 }
 
-const reactionQuery = query(collection(db, 'reactions'))
 
-const ChatView = ({ edit, setEdit, chats }: Props) => {
-  const [reactions, setReaction] = useState(new Map<string, Reaction>())
-  const {user} = useAuth()
-
-  useEffect(() => {
-    const fetchReactions = async () => {
-      const reactionSnapshot = await getDocs(reactionQuery)
-
-      const tempReactions = new Map<string, Reaction>()
-      reactionSnapshot.forEach((doc) => {
-        let curr_reaction = { ... doc.data() as Reaction }
-        tempReactions.set(doc.id, curr_reaction)
-      })
-
-      setReaction(tempReactions)
-    }
-    fetchReactions()
-  }, [user])
-
+const ChatView = ({ edit, setEdit, chats, reactions}: Props) => {
   return (
     <motion.div
       initial={{ scale: 0.95 }}
